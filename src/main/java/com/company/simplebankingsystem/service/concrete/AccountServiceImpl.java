@@ -1,15 +1,11 @@
 package com.company.simplebankingsystem.service.concrete;
 
 import com.company.simplebankingsystem.dao.entity.AccountEntity;
-import com.company.simplebankingsystem.dao.entity.TransactionLogEntity;
 import com.company.simplebankingsystem.dao.entity.UserEntity;
 import com.company.simplebankingsystem.dao.repository.AccountRepository;
-import com.company.simplebankingsystem.dao.repository.TransactionLogRepository;
 import com.company.simplebankingsystem.dao.repository.UserRepository;
 import com.company.simplebankingsystem.dto.request.CreateAccountRequest;
-import com.company.simplebankingsystem.dto.request.DepositRequest;
 import com.company.simplebankingsystem.dto.request.TransferRequest;
-import com.company.simplebankingsystem.dto.request.WithdrawRequest;
 import com.company.simplebankingsystem.dto.response.CreateAccountResponse;
 import com.company.simplebankingsystem.dto.response.DepositResponse;
 import com.company.simplebankingsystem.dto.response.TransferResponse;
@@ -24,11 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
-import static com.company.simplebankingsystem.enums.OperationType.DEPOSIT;
-import static com.company.simplebankingsystem.enums.OperationType.TRANSFER;
-import static com.company.simplebankingsystem.enums.OperationType.WITHDRAW;
 import static lombok.AccessLevel.PRIVATE;
 
 @Service
@@ -37,8 +29,8 @@ import static lombok.AccessLevel.PRIVATE;
 @FieldDefaults(level = PRIVATE, makeFinal = true)
 public class AccountServiceImpl implements AccountService {
     AccountRepository accountRepository;
-    TransactionLogRepository transactionLogRepository;
     UserRepository userRepository;
+    TransactionLogImpl tranLogService;
 
     private AccountEntity findAccount(Long id) {
         return accountRepository.findById(id)
@@ -59,45 +51,33 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public DepositResponse deposit(DepositRequest request) {
-        log.info("deposit started for accountId: {}", request.getAccountId());
-        AccountEntity account = accountRepository.findById(request.getAccountId())
+    public DepositResponse deposit(Long accountId, BigDecimal amount) {
+        log.info("deposit started for accountId: {}", accountId);
+        AccountEntity account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account not found"));
 
-        account.setBalance(account.getBalance().add(request.getAmount()));
+        account.setBalance(account.getBalance().add(amount));
         accountRepository.save(account);
 
-        TransactionLogEntity logEntity = TransactionLogEntity.builder()
-                .accountId(request.getAccountId())
-                .operation(DEPOSIT)
-                .amount(request.getAmount())
-                .timestamp(LocalDateTime.now())
-                .build();
-        transactionLogRepository.save(logEntity);
-        log.info("deposit finished for accountId: {}", request.getAccountId());
+        tranLogService.depositLog(accountId, amount);
+        log.info("deposit finished for accountId: {}", accountId);
         return AccountMapper.entityToDepositResponse(account);
     }
 
     @Transactional
     @Override
-    public WithdrawResponse withdraw(WithdrawRequest request) {
-        log.info("withdraw started for accountId: {}", request.getAccountId());
-        AccountEntity account = findAccount(request.getAccountId());
+    public WithdrawResponse withdraw(Long accountId, BigDecimal amount) {
+        log.info("withdraw started for accountId: {}", accountId);
+        AccountEntity account = findAccount(accountId);
 
-        if (account.getBalance().compareTo(request.getAmount()) < 0) {
+        if (account.getBalance().compareTo(amount) < 0) {
             throw new RuntimeException("Insufficient balance");
         }
-        account.setBalance(account.getBalance().subtract(request.getAmount()));
+        account.setBalance(account.getBalance().subtract(amount));
         accountRepository.save(account);
 
-        TransactionLogEntity logEntity = TransactionLogEntity.builder()
-                .accountId(request.getAccountId())
-                .operation(WITHDRAW)
-                .amount(request.getAmount())
-                .timestamp(LocalDateTime.now())
-                .build();
-        transactionLogRepository.save(logEntity);
-        log.info("withdraw finished for accountId: {}", request.getAccountId());
+        tranLogService.withdrawLog(accountId, amount);
+        log.info("withdraw finished for accountId: {}", accountId);
         return WithdrawResponse.builder()
                 .balance(account.getBalance())
                 .userId(account.getUserId())
@@ -108,23 +88,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public TransferResponse transfer(TransferRequest request) {
         log.info("transfer started from {} to {}", request.getFromAccountId(), request.getToAccountId());
-        AccountEntity fromAccount = findAccount(request.getFromAccountId());
-        AccountEntity toAccount = findAccount(request.getToAccountId());
-
-        if (fromAccount.getBalance().compareTo(request.getAmount()) < 0) {
-            throw new RuntimeException("Insufficient balance");
-        }
-        fromAccount.setBalance(fromAccount.getBalance().subtract(request.getAmount()));
-        toAccount.setBalance(toAccount.getBalance().add(request.getAmount()));
-        accountRepository.save(fromAccount);
-        accountRepository.save(toAccount);
-        TransactionLogEntity logEntity = TransactionLogEntity.builder()
-                .accountId(request.getFromAccountId())
-                .operation(TRANSFER)
-                .amount(request.getAmount())
-                .timestamp(LocalDateTime.now())
-                .build();
-        transactionLogRepository.save(logEntity);
+        withdraw(request.getFromAccountId(), request.getAmount());
+        deposit(request.getToAccountId(), request.getAmount());
         log.info("transfer finished from {} to {}", request.getFromAccountId(), request.getToAccountId());
         return AccountMapper.requestToTransferResponse(request);
     }

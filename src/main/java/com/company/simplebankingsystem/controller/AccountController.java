@@ -13,12 +13,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
 
 import static lombok.AccessLevel.PRIVATE;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -38,16 +42,16 @@ public class AccountController {
         return accountService.create(request);
     }
 
-    @PostMapping("/deposit")
-    @ResponseStatus(CREATED)
-    public DepositResponse deposit(@Valid @RequestBody DepositRequest request) {
-        return accountService.deposit(request);
+    @PostMapping("/deposit/{accountId}")
+    @ResponseStatus(OK)
+    public DepositResponse deposit(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
+        return accountService.deposit(accountId,amount);
     }
 
-    @DeleteMapping("/withdraw")
-    @ResponseStatus(NO_CONTENT)
-    public WithdrawResponse withdraw(@RequestBody WithdrawRequest request) {
-        return accountService.withdraw(request);
+    @DeleteMapping("/withdraw/{accountId}")
+    @ResponseStatus(OK)
+    public WithdrawResponse withdraw(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
+        return accountService.withdraw(accountId,amount);
     }
 
     @PutMapping("/transfer")

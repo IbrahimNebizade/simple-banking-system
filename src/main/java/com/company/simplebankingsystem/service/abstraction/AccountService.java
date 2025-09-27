@@ -14,9 +14,9 @@ import java.math.BigDecimal;
 
 public interface AccountService {
      CreateAccountResponse create(@RequestBody CreateAccountRequest request);
-    DepositResponse deposit(DepositRequest request);
+    DepositResponse deposit(Long accountId,BigDecimal amount);
 
-    WithdrawResponse withdraw(WithdrawRequest request);
+    WithdrawResponse withdraw(Long accountId,BigDecimal amount);
 
     TransferResponse transfer(TransferRequest request);
 }
