@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: ibrahim nebizade
+      changes:
+        - createTable:
+            tableName: transaction_logs
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: operation
+                  type: VARCHAR(30)
+              - column:
+                  name: timestamp
+                  type: TIMESTAMP
+              - column:
+                  name: account_id
+                  type: bigint
+              - column:
+                  name: amount
+                  type: decimal(19,2)

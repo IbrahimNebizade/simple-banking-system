@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/01_create_user_table.yml
+  - include:
+      file: db/changelog/02_create_account_table.yml
+  - include:
+      file: db/changelog/03_create_transaction_log_table.yml

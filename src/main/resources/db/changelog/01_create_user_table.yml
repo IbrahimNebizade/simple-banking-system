@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: ibrahim nebizade
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(30)
+              - column:
+                  name: surname
+                  type: VARCHAR(30)
+              - column:
+                  name: email
+                  type: VARCHAR(50)
+              - column:
+                  name: fin
+                  type: VARCHAR(7)
+              - column:
+                  name: age
+                  type: INT
+              - column:
+                  name: create_at
+                  type: TIMESTAMP
+              - column:
+                  name: update_at
+                  type: TIMESTAMP
+              - column:
+                  name: user_status
+                  type: VARCHAR(50)
